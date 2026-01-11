@@ -12,6 +12,10 @@ h1 { text-align: center; }
   margin-bottom: 10px;
 }
 
+.list-row {
+  flex-wrap: wrap; /* mobil: Buttons unter select */
+}
+
 input, select, button {
   padding: 12px;
   font-size: 16px;
@@ -33,9 +37,34 @@ li {
   justify-content: space-between;
   align-items: center;
   touch-action: pan-y;
+  cursor: grab;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+li.dragging {
+  opacity: 0.8;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+  cursor: grabbing;
+  position: relative;
+  z-index: 1000;
+}
+
+li.placeholder {
+  background: #e0e0e0;
+  border: 2px dashed #aaa;
+  min-height: 40px;
+  margin-bottom: 6px;
 }
 
 li.done {
   text-decoration: line-through;
   opacity: 0.5;
+}
+
+/* Responsive: Buttons unter Select auf kleineren Screens */
+@media (max-width: 480px) {
+  .list-row {
+    flex-direction: column;
+    gap: 6px;
+  }
 }

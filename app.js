@@ -11,13 +11,14 @@ const deleteListBtn = document.getElementById("delete-list");
 const shareListBtn = document.getElementById("share-list");
 const clearItemsBtn = document.getElementById("clear-items");
 
-let data = JSON.parse(localStorage.getItem("shoppingData")) || {
-  Supermarkt: []
-};
-
+let data = JSON.parse(localStorage.getItem("shoppingData")) || { Supermarkt: [] };
 let currentList = Object.keys(data)[0];
-let dragIndex = null;
+let draggingEl = null;
+let placeholder = null;
+let undoBuffer = null;
+let undoTimeout = null;
 
+/* ------------------ FUNKTIONEN ------------------ */
 function save() {
   localStorage.setItem("shoppingData", JSON.stringify(data));
   renderItems();
@@ -38,15 +39,10 @@ function renderItems() {
   items.forEach((item, index) => {
     const li = document.createElement("li");
     li.textContent = item.text;
-    li.draggable = true;
-
     if (item.done) li.classList.add("done");
 
     /* CLICK = abhaken */
-    li.onclick = () => {
-      item.done = !item.done;
-      save();
-    };
+    li.onclick = () => { item.done = !item.done; save(); };
 
     /* DOPPELTIPP = bearbeiten */
     li.ondblclick = () => {
@@ -57,51 +53,69 @@ function renderItems() {
 
     /* SWIPE */
     let startX = 0;
-    li.addEventListener("touchstart", e => {
-      startX = e.touches[0].clientX;
-    });
-
+    li.addEventListener("touchstart", e => startX = e.touches[0].clientX);
     li.addEventListener("touchend", e => {
       const diff = e.changedTouches[0].clientX - startX;
-      if (diff > 80) {
-        item.done = !item.done;
-        save();
-      }
-      if (diff < -80) {
-        items.splice(index, 1);
-        save();
+      if (diff > 80) { item.done = !item.done; save(); }
+      if (diff < -80) { data[currentList].splice(index, 1); save(); }
+    });
+
+    /* DRAG & DROP SMOOTH */
+    li.draggable = true;
+
+    li.addEventListener("dragstart", e => {
+      draggingEl = li;
+      placeholder = document.createElement("li");
+      placeholder.classList.add("placeholder");
+      li.classList.add("dragging");
+      itemList.insertBefore(placeholder, li.nextSibling);
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", "");
+    });
+
+    li.addEventListener("dragend", () => {
+      li.classList.remove("dragging");
+      if (placeholder) placeholder.remove();
+      draggingEl = null;
+      placeholder = null;
+      save();
+    });
+
+    li.addEventListener("dragover", e => {
+      e.preventDefault();
+      const target = e.target;
+      if (target && target !== draggingEl && target.tagName === "LI") {
+        const rect = target.getBoundingClientRect();
+        const next = (e.clientY - rect.top) > rect.height / 2;
+        itemList.insertBefore(placeholder, next ? target.nextSibling : target);
       }
     });
 
-    /* DRAG & DROP */
-    li.ondragstart = () => dragIndex = index;
-    li.ondragover = e => e.preventDefault();
-    li.ondrop = () => {
-      const dragged = items.splice(dragIndex, 1)[0];
-      items.splice(index, 0, dragged);
+    li.addEventListener("drop", e => {
+      e.preventDefault();
+      const itemsArray = data[currentList];
+      const oldIndex = itemsArray.findIndex(i => i.text === draggingEl.textContent);
+      itemsArray.splice(oldIndex, 1);
+      const newIndex = Array.from(itemList.children).indexOf(placeholder);
+      itemsArray.splice(newIndex, 0, { text: draggingEl.textContent, done: draggingEl.classList.contains("done") });
       save();
-    };
+    });
 
     itemList.appendChild(li);
   });
 }
 
-/* EVENTS */
-
-itemForm.addEventListener("submit", e => {
+/* ------------------ EVENTS ------------------ */
+itemForm.onsubmit = e => {
   e.preventDefault();
-  const value = itemInput.value.trim();
-  if (!value) return;
-
-  data[currentList].push({ text: value, done: false });
+  const val = itemInput.value.trim();
+  if (!val) return;
+  data[currentList].push({ text: val, done: false });
   itemInput.value = "";
   save();
-});
-
-listSelect.onchange = e => {
-  currentList = e.target.value;
-  renderItems();
 };
+
+listSelect.onchange = e => { currentList = e.target.value; renderItems(); };
 
 toggleNewListBtn.onclick = () => {
   newListForm.classList.toggle("hidden");
@@ -112,7 +126,6 @@ newListForm.onsubmit = e => {
   e.preventDefault();
   const name = newListInput.value.trim();
   if (!name || data[name]) return;
-
   data[name] = [];
   currentList = name;
   newListInput.value = "";
@@ -130,23 +143,33 @@ deleteListBtn.onclick = () => {
 };
 
 clearItemsBtn.onclick = () => {
-  if (data[currentList].length === 0) return;
+  const items = data[currentList];
+  if (!items.length) return;
+  if (!confirm("Willst du wirklich alle Artikel dieser Liste löschen?")) return;
 
-  const ok = confirm("Willst du wirklich alle Artikel dieser Liste löschen?");
-  if (!ok) return;
-
+  undoBuffer = [...items];
   data[currentList] = [];
   save();
+
+  alert("Alle Artikel gelöscht. Klicke OK innerhalb von 5 Sekunden zum Wiederherstellen.");
+
+  clearTimeout(undoTimeout);
+  undoTimeout = setTimeout(() => { undoBuffer = null; }, 5000);
+
+  const undo = confirm("Artikel wiederherstellen?");
+  if (undo && undoBuffer) {
+    data[currentList] = undoBuffer;
+    undoBuffer = null;
+    save();
+  }
 };
 
 shareListBtn.onclick = () => {
   let text = `${currentList}\n\n`;
   data[currentList].forEach(i => text += `- ${i.text}\n`);
-
-  navigator.share
-    ? navigator.share({ title: currentList, text })
-    : alert(text);
+  navigator.share ? navigator.share({ title: currentList, text }) : alert(text);
 };
 
+/* ------------------ INIT ------------------ */
 renderLists();
 renderItems();
