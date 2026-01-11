@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Einkaufsliste</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h1>🛒 Einkaufsliste</h1>
+
+<div class="row">
+  <select id="list-select"></select>
+  <button id="share-list">📤</button>
+  <button id="delete-list">🗑️</button>
+</div>
+
+<form id="new-list-form">
+  <input id="new-list-input" placeholder="Neue Liste">
+  <button>+</button>
+</form>
+
+<hr>
+
+<div class="row">
+  <select id="category-select"></select>
+  <button id="edit-category">✏️</button>
+  <button id="delete-category">🗑️</button>
+</div>
+
+<form id="new-category-form">
+  <input id="new-category-input" placeholder="Neue Kategorie">
+  <button>+</button>
+</form>
+
+<form id="item-form">
+  <input id="item-input" placeholder="Artikel hinzufügen…" required>
+  <button>+</button>
+</form>
+
+<ul id="item-list"></ul>
+
+<script src="app.js"></script>
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("service-worker.js");
+}
+</script>
+
+</body>
+</html>
