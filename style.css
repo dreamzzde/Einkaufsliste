@@ -8,26 +8,24 @@ h1 { text-align: center; }
 
 .row {
   display: flex;
-  gap: 10px;
+  align-items: center;
+  gap: 6px;
   margin-bottom: 10px;
 }
 
-.list-row {
-  align-items: center;
-  flex-wrap: wrap;
+.list-row select {
+  flex: 1;
+  padding: 12px;
+  font-size: 16px;
 }
 
-.list-buttons {
-  display: flex;
-  gap: 5px;
-}
-
-.list-buttons button {
-  font-size: 18px; /* Symbolgröße klein */
+.list-row button, #item-form button {
+  font-size: 18px;
   padding: 6px 8px;
 }
 
-input, select, button {
+#item-form input {
+  flex: 1;
   padding: 12px;
   font-size: 16px;
 }
@@ -72,10 +70,6 @@ li.done {
   opacity: 0.5;
 }
 
-/* Responsive: Buttons unter Select auf kleineren Screens */
 @media (max-width: 480px) {
-  .list-row {
-    flex-direction: column;
-    gap: 6px;
-  }
+  .row { flex-wrap: wrap; gap: 6px; }
 }

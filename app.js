@@ -3,12 +3,10 @@ const itemList = document.getElementById("item-list");
 const itemForm = document.getElementById("item-form");
 const itemInput = document.getElementById("item-input");
 
-const toggleNewListBtn = document.getElementById("toggle-new-list");
+const addListBtn = document.getElementById("add-list");
 const newListForm = document.getElementById("new-list-form");
 const newListInput = document.getElementById("new-list-input");
-
 const deleteListBtn = document.getElementById("delete-list");
-const shareListBtn = document.getElementById("share-list");
 const clearItemsBtn = document.getElementById("clear-items");
 
 let data = JSON.parse(localStorage.getItem("shoppingData")) || { Supermarkt: [] };
@@ -36,31 +34,31 @@ function renderItems() {
   itemList.innerHTML = "";
   const items = data[currentList];
 
-  items.forEach((item, index) => {
+  items.forEach((item) => {
     const li = document.createElement("li");
     li.textContent = item.text;
     if (item.done) li.classList.add("done");
 
-    /* CLICK = abhaken */
+    /* Abhaken */
     li.onclick = () => { item.done = !item.done; save(); };
 
-    /* DOPPELTIPP = bearbeiten */
+    /* Bearbeiten */
     li.ondblclick = () => {
       const txt = prompt("Artikel bearbeiten", item.text);
       if (txt) item.text = txt;
       save();
     };
 
-    /* SWIPE */
+    /* Swipe */
     let startX = 0;
     li.addEventListener("touchstart", e => startX = e.touches[0].clientX);
     li.addEventListener("touchend", e => {
       const diff = e.changedTouches[0].clientX - startX;
       if (diff > 80) { item.done = !item.done; save(); }
-      if (diff < -80) { data[currentList].splice(index, 1); save(); }
+      if (diff < -80) { data[currentList].splice(items.indexOf(item), 1); save(); }
     });
 
-    /* DRAG & DROP */
+    /* Drag & Drop */
     li.draggable = true;
 
     li.addEventListener("dragstart", e => {
@@ -108,18 +106,12 @@ function renderItems() {
 }
 
 /* ------------------ EVENTS ------------------ */
-itemForm.onsubmit = e => {
-  e.preventDefault();
-  const val = itemInput.value.trim();
-  if (!val) return;
-  data[currentList].push({ text: val, done: false });
-  itemInput.value = "";
-  save();
-};
 
+/* Kategorie wechseln */
 listSelect.onchange = e => { currentList = e.target.value; renderItems(); };
 
-toggleNewListBtn.onclick = () => {
+/* Neue Liste erstellen */
+addListBtn.onclick = () => {
   newListForm.classList.toggle("hidden");
   newListInput.focus();
 };
@@ -136,6 +128,7 @@ newListForm.onsubmit = e => {
   renderLists();
 };
 
+/* Liste löschen */
 deleteListBtn.onclick = () => {
   if (Object.keys(data).length <= 1) return;
   delete data[currentList];
@@ -144,35 +137,33 @@ deleteListBtn.onclick = () => {
   renderLists();
 };
 
+/* Artikel hinzufügen */
+itemForm.onsubmit = e => {
+  e.preventDefault();
+  const val = itemInput.value.trim();
+  if (!val) return;
+  data[currentList].push({ text: val, done: false });
+  itemInput.value = "";
+  save();
+};
+
+/* Alle Artikel löschen */
 clearItemsBtn.onclick = () => {
   const items = data[currentList];
   if (!items.length) return;
-  if (!confirm("Willst du wirklich alle Artikel dieser Liste löschen?")) return;
-
+  if (!confirm("Alle Artikel löschen?")) return;
   undoBuffer = [...items];
   data[currentList] = [];
   save();
-
-  alert("Alle Artikel gelöscht. Klicke OK innerhalb von 5 Sekunden zum Wiederherstellen.");
-
   clearTimeout(undoTimeout);
-  undoTimeout = setTimeout(() => { undoBuffer = null; }, 5000);
-
-  const undo = confirm("Artikel wiederherstellen?");
-  if (undo && undoBuffer) {
+  undoTimeout = setTimeout(() => undoBuffer = null, 5000);
+  if (confirm("Artikel wiederherstellen?") && undoBuffer) {
     data[currentList] = undoBuffer;
     undoBuffer = null;
     save();
   }
 };
 
-shareListBtn.onclick = () => {
-  let text = `${currentList}\n\n`;
-  data[currentList].forEach(i => text += `- ${i.text}\n`);
-  navigator.share ? navigator.share({ title: currentList, text }) : alert(text);
-};
-
 /* ------------------ INIT ------------------ */
 renderLists();
 renderItems();
-

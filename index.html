@@ -11,29 +11,24 @@
 
 <h1>🛒 Einkaufsliste</h1>
 
-<!-- LISTENWAHL + LÖSCHEN + TEILEN -->
+<!-- OBERE LEISTE: Kategorie + +Neue Liste + Liste löschen -->
 <div class="row list-row">
   <select id="list-select"></select>
-  <div class="list-buttons">
-    <button id="delete-list">🗑️</button>
-    <button id="share-list">📤</button>
-  </div>
+  <button id="add-list" title="Neue Liste">➕</button>
+  <button id="delete-list" title="Liste löschen">🗑️</button>
 </div>
 
-<!-- NEUE LISTE + ALLE ARTIKEL LÖSCHEN -->
-<div class="row">
-  <button id="toggle-new-list">➕ Neue Liste</button>
-  <button id="clear-items">🧹 Alle Artikel löschen</button>
-</div>
-
+<!-- FORM NEUE LISTE (hidden) -->
 <form id="new-list-form" class="hidden">
   <input id="new-list-input" placeholder="Listenname" required>
   <button>Erstellen</button>
 </form>
 
-<form id="item-form">
+<!-- ARTIKEL HINZUFÜGEN + ALLE LÖSCHEN -->
+<form id="item-form" class="row">
   <input id="item-input" placeholder="Artikel hinzufügen…" required>
   <button>+</button>
+  <button type="button" id="clear-items" title="Alle Artikel löschen">🧹</button>
 </form>
 
 <ul id="item-list"></ul>
