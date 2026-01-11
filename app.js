@@ -60,7 +60,7 @@ function renderItems() {
       if (diff < -80) { data[currentList].splice(index, 1); save(); }
     });
 
-    /* DRAG & DROP SMOOTH */
+    /* DRAG & DROP */
     li.draggable = true;
 
     li.addEventListener("dragstart", e => {
@@ -83,6 +83,7 @@ function renderItems() {
 
     li.addEventListener("dragover", e => {
       e.preventDefault();
+      if (!draggingEl) return;
       const target = e.target;
       if (target && target !== draggingEl && target.tagName === "LI") {
         const rect = target.getBoundingClientRect();
@@ -93,6 +94,7 @@ function renderItems() {
 
     li.addEventListener("drop", e => {
       e.preventDefault();
+      if (!draggingEl || !placeholder) return;
       const itemsArray = data[currentList];
       const oldIndex = itemsArray.findIndex(i => i.text === draggingEl.textContent);
       itemsArray.splice(oldIndex, 1);
@@ -173,3 +175,4 @@ shareListBtn.onclick = () => {
 /* ------------------ INIT ------------------ */
 renderLists();
 renderItems();
+

@@ -11,13 +11,16 @@
 
 <h1>🛒 Einkaufsliste</h1>
 
-<!-- LISTENWAHL + BUTTONS -->
+<!-- LISTENWAHL + LÖSCHEN + TEILEN -->
 <div class="row list-row">
   <select id="list-select"></select>
-  <button id="delete-list">🗑️</button>
-  <button id="share-list">📤</button>
+  <div class="list-buttons">
+    <button id="delete-list">🗑️</button>
+    <button id="share-list">📤</button>
+  </div>
 </div>
 
+<!-- NEUE LISTE + ALLE ARTIKEL LÖSCHEN -->
 <div class="row">
   <button id="toggle-new-list">➕ Neue Liste</button>
   <button id="clear-items">🧹 Alle Artikel löschen</button>
