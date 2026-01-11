@@ -17,7 +17,7 @@ input, select, button {
   font-size: 16px;
 }
 
-select, input { flex: 1; }
+.hidden { display: none; }
 
 ul {
   list-style: none;
@@ -32,6 +32,7 @@ li {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  touch-action: pan-y;
 }
 
 li.done {

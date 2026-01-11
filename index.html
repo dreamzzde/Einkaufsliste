@@ -17,22 +17,14 @@
   <button id="delete-list">🗑️</button>
 </div>
 
-<form id="new-list-form">
-  <input id="new-list-input" placeholder="Neue Liste">
-  <button>+</button>
-</form>
-
-<hr>
-
 <div class="row">
-  <select id="category-select"></select>
-  <button id="edit-category">✏️</button>
-  <button id="delete-category">🗑️</button>
+  <button id="toggle-new-list">➕ Neue Liste</button>
+  <button id="clear-items">🧹 Alle Artikel löschen</button>
 </div>
 
-<form id="new-category-form">
-  <input id="new-category-input" placeholder="Neue Kategorie">
-  <button>+</button>
+<form id="new-list-form" class="hidden">
+  <input id="new-list-input" placeholder="Listenname" required>
+  <button>Erstellen</button>
 </form>
 
 <form id="item-form">

@@ -1,26 +1,22 @@
 const listSelect = document.getElementById("list-select");
-const categorySelect = document.getElementById("category-select");
 const itemList = document.getElementById("item-list");
-
 const itemForm = document.getElementById("item-form");
 const itemInput = document.getElementById("item-input");
 
+const toggleNewListBtn = document.getElementById("toggle-new-list");
 const newListForm = document.getElementById("new-list-form");
 const newListInput = document.getElementById("new-list-input");
+
 const deleteListBtn = document.getElementById("delete-list");
 const shareListBtn = document.getElementById("share-list");
-
-const newCategoryForm = document.getElementById("new-category-form");
-const newCategoryInput = document.getElementById("new-category-input");
-const editCategoryBtn = document.getElementById("edit-category");
-const deleteCategoryBtn = document.getElementById("delete-category");
+const clearItemsBtn = document.getElementById("clear-items");
 
 let data = JSON.parse(localStorage.getItem("shoppingData")) || {
-  supermarkt: { categories: { Allgemein: [] } }
+  Supermarkt: []
 };
 
 let currentList = Object.keys(data)[0];
-let currentCategory = Object.keys(data[currentList].categories)[0];
+let dragIndex = null;
 
 function save() {
   localStorage.setItem("shoppingData", JSON.stringify(data));
@@ -33,70 +29,94 @@ function renderLists() {
     listSelect.innerHTML += `<option value="${name}">${name}</option>`;
   });
   listSelect.value = currentList;
-  renderCategories();
-}
-
-function renderCategories() {
-  categorySelect.innerHTML = "";
-  Object.keys(data[currentList].categories).forEach(cat => {
-    categorySelect.innerHTML += `<option value="${cat}">${cat}</option>`;
-  });
-  currentCategory = categorySelect.value;
-  renderItems();
 }
 
 function renderItems() {
   itemList.innerHTML = "";
-  const items = data[currentList].categories[currentCategory];
+  const items = data[currentList];
 
-  const sorted = [
-    ...items.filter(i => !i.done),
-    ...items.filter(i => i.done)
-  ];
-
-  sorted.forEach(item => {
+  items.forEach((item, index) => {
     const li = document.createElement("li");
-    li.draggable = true;
     li.textContent = item.text;
+    li.draggable = true;
+
     if (item.done) li.classList.add("done");
 
-    li.onclick = () => { item.done = !item.done; save(); };
+    /* CLICK = abhaken */
+    li.onclick = () => {
+      item.done = !item.done;
+      save();
+    };
 
+    /* DOPPELTIPP = bearbeiten */
     li.ondblclick = () => {
       const txt = prompt("Artikel bearbeiten", item.text);
       if (txt) item.text = txt;
       save();
     };
 
-    const del = document.createElement("button");
-    del.textContent = "❌";
-    del.onclick = e => {
-      e.stopPropagation();
-      items.splice(items.indexOf(item), 1);
+    /* SWIPE */
+    let startX = 0;
+    li.addEventListener("touchstart", e => {
+      startX = e.touches[0].clientX;
+    });
+
+    li.addEventListener("touchend", e => {
+      const diff = e.changedTouches[0].clientX - startX;
+      if (diff > 80) {
+        item.done = !item.done;
+        save();
+      }
+      if (diff < -80) {
+        items.splice(index, 1);
+        save();
+      }
+    });
+
+    /* DRAG & DROP */
+    li.ondragstart = () => dragIndex = index;
+    li.ondragover = e => e.preventDefault();
+    li.ondrop = () => {
+      const dragged = items.splice(dragIndex, 1)[0];
+      items.splice(index, 0, dragged);
       save();
     };
 
-    li.appendChild(del);
     itemList.appendChild(li);
   });
 }
 
 /* EVENTS */
 
-itemForm.onsubmit = e => {
+itemForm.addEventListener("submit", e => {
   e.preventDefault();
-  data[currentList].categories[currentCategory].push({ text: itemInput.value, done: false });
+  const value = itemInput.value.trim();
+  if (!value) return;
+
+  data[currentList].push({ text: value, done: false });
   itemInput.value = "";
   save();
+});
+
+listSelect.onchange = e => {
+  currentList = e.target.value;
+  renderItems();
+};
+
+toggleNewListBtn.onclick = () => {
+  newListForm.classList.toggle("hidden");
+  newListInput.focus();
 };
 
 newListForm.onsubmit = e => {
   e.preventDefault();
   const name = newListInput.value.trim();
   if (!name || data[name]) return;
-  data[name] = { categories: { Allgemein: [] } };
+
+  data[name] = [];
   currentList = name;
   newListInput.value = "";
+  newListForm.classList.add("hidden");
   save();
   renderLists();
 };
@@ -109,47 +129,19 @@ deleteListBtn.onclick = () => {
   renderLists();
 };
 
-listSelect.onchange = e => {
-  currentList = e.target.value;
-  renderCategories();
-};
+clearItemsBtn.onclick = () => {
+  if (data[currentList].length === 0) return;
 
-newCategoryForm.onsubmit = e => {
-  e.preventDefault();
-  const name = newCategoryInput.value.trim();
-  if (!name) return;
-  data[currentList].categories[name] = [];
-  newCategoryInput.value = "";
-  save();
-  renderCategories();
-};
+  const ok = confirm("Willst du wirklich alle Artikel dieser Liste löschen?");
+  if (!ok) return;
 
-editCategoryBtn.onclick = () => {
-  const newName = prompt("Kategorie umbenennen", currentCategory);
-  if (!newName) return;
-  data[currentList].categories[newName] =
-    data[currentList].categories[currentCategory];
-  delete data[currentList].categories[currentCategory];
-  currentCategory = newName;
+  data[currentList] = [];
   save();
-  renderCategories();
-};
-
-deleteCategoryBtn.onclick = () => {
-  if (Object.keys(data[currentList].categories).length <= 1) return;
-  delete data[currentList].categories[currentCategory];
-  currentCategory = Object.keys(data[currentList].categories)[0];
-  save();
-  renderCategories();
 };
 
 shareListBtn.onclick = () => {
   let text = `${currentList}\n\n`;
-  Object.entries(data[currentList].categories).forEach(([cat, items]) => {
-    text += `${cat}:\n`;
-    items.forEach(i => text += `- ${i.text}\n`);
-    text += "\n";
-  });
+  data[currentList].forEach(i => text += `- ${i.text}\n`);
 
   navigator.share
     ? navigator.share({ title: currentList, text })
@@ -157,3 +149,4 @@ shareListBtn.onclick = () => {
 };
 
 renderLists();
+renderItems();
